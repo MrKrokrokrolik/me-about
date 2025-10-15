@@ -1,25 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Redirecting...</title>
-  <script>
-    fetch('target.json')
-      .then(res => res.json())
-      .then(data => {
-        if(data.url){
-          window.location.href = data.url; // редирект
-        } else {
-          document.body.innerHTML = "No target URL configured";
-        }
-      })
-      .catch(err => {
-        document.body.innerHTML = "Error fetching target URL";
-        console.error(err);
-      });
-  </script>
+  <title>Подключение...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.95); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top right, #1e3c72, #2a5298);
+      color: white;
+      font-family: "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+      animation: pulse 2s infinite;
+    }
+
+    p {
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 30px;
+    }
+
+    .loader {
+      width: 70px;
+      height: 70px;
+      border: 6px solid rgba(255,255,255,0.2);
+      border-top: 6px solid white;
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .error-box {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      color: #ffaaaa;
+      padding: 15px 25px;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+      line-height: 1.5em;
+      box-shadow: 0 0 20px rgba(255,0,0,0.1);
+      animation: pulse 2s infinite;
+    }
+
+    a {
+      color: #7ec8ff;
+      text-decoration: none;
+      border-bottom: 1px dotted;
+    }
+  </style>
 </head>
 <body>
-  Redirecting...
+  <div class="loader"></div>
+  <h1>Подключаемся к серверу...</h1>
+  <p>Пожалуйста, подождите пару секунд</p>
+
+  <script>
+    async function connect() {
+      try {
+        const res = await fetch('target.json');
+        if (!res.ok) throw new Error("target.json not found");
+        const data = await res.json();
+
+        if (data.url) {
+          document.querySelector("h1").textContent = "Перенаправление...";
+          setTimeout(() => window.location.href = data.url, 1000);
+        } else {
+          showError("Целевой адрес не указан. Проверьте конфигурацию <code>target.json</code>.");
+        }
+      } catch (err) {
+        console.error(err);
+        showError("Не удалось подключиться к серверу.<br>Возможно, сайт временно недоступен.");
+      }
+    }
+
+    function showError(message) {
+      document.body.innerHTML = `
+        <div class="error-box">
+          <h2>⚠ Ошибка подключения</h2>
+          <p>${message}</p>
+          <p><a href="#" onclick="window.location.reload()">🔄 Повторить попытку</a></p>
+        </div>
+      `;
+    }
+
+    connect();
+  </script>
 </body>
 </html>
