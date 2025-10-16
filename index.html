@@ -2,100 +2,83 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Переход...</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Проверка туннеля...</title>
 <style>
   body {
     margin: 0;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    background: radial-gradient(circle at top left, #0a1930, #111d4a, #2a5298);
-    color: #fff;
+    justify-content: center;
     font-family: "Poppins", sans-serif;
-    overflow: hidden;
+    background: radial-gradient(circle at top left, #081229, #152850, #234F8C);
+    color: white;
+    text-align: center;
   }
-  h1 {
-    font-size: 2.5em;
-    animation: glow 3s ease-in-out infinite alternate;
-  }
-  @keyframes glow {
-    from { text-shadow: 0 0 10px #00c3ff, 0 0 20px #0077ff; }
-    to { text-shadow: 0 0 25px #66e0ff, 0 0 50px #00aaff; }
-  }
-  p {
-    opacity: 0.85;
-    margin-top: 10px;
-  }
+  h1 { font-size: 2.3em; animation: glow 3s ease-in-out infinite alternate; }
+  @keyframes glow { from { text-shadow: 0 0 15px #00b7ff; } to { text-shadow: 0 0 35px #00d5ff; } }
+  .error { color: #ff6b6b; text-shadow: 0 0 15px rgba(255,0,0,0.7); }
   .loader {
-    margin-top: 30px;
-    border: 5px solid rgba(255,255,255,0.2);
-    border-top: 5px solid #00bfff;
+    border: 4px solid rgba(255,255,255,0.2);
+    border-top: 4px solid #00c3ff;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
+    margin: 20px;
   }
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  .error {
-    color: #ff6b6b;
-    text-shadow: 0 0 10px rgba(255,50,50,0.7);
-  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-  <h1 id="status">Подключение...</h1>
-  <p id="info">Проверяем доступность сервера</p>
   <div class="loader"></div>
+  <h1 id="title">Проверка подключения...</h1>
+  <p id="desc">Получаем адрес сервера...</p>
 
-  <script>
-    async function checkAndRedirect() {
-      try {
-        const res = await fetch('target.json');
-        const data = await res.json();
-        if (!data.url) throw new Error("URL не найден");
+<script>
+(async () => {
+  const title = document.getElementById("title");
+  const desc = document.getElementById("desc");
 
-        const targetUrl = data.url;
-        document.getElementById("info").innerText = "Проверяем сервер...";
+  try {
+    // Загружаем JSON с GitHub
+    const res = await fetch("https://raw.githubusercontent.com/MrKrokrokrolik/me-about/main/target.json");
+    if (!res.ok) throw new Error("Не удалось получить target.json");
 
-        // Проверяем ответ с сайта
-        const check = await fetch(targetUrl, { mode: 'no-cors' })
-          .then(() => true)
-          .catch(() => false);
+    const data = await res.json();
+    const tunnelUrl = data.url;
+    if (!tunnelUrl) throw new Error("URL туннеля отсутствует");
 
-        if (!check) {
-          showError("Сервер недоступен. Попробуйте позже.");
-          return;
-        }
+    desc.textContent = "Проверяем доступность сервера...";
 
-        // Если доступен — проверим содержимое
-        const textRes = await fetch(targetUrl).then(r => r.text());
-        if (textRes.includes("Cloudflare Tunnel error") || textRes.includes("Error 1033")) {
-          showError("Сервер временно недоступен (ошибка Cloudflare).");
-          return;
-        }
+    // Проверяем наличие favicon
+    const favicon = tunnelUrl + "/static/favicon.ico?_=" + Date.now();
+    const img = new Image();
 
-        // Всё ок — перенаправляем
-        document.getElementById("info").innerText = "Перенаправление...";
-        setTimeout(() => window.location.href = targetUrl, 1000);
-      } catch (err) {
-        showError("Ошибка при подключении: " + err.message);
-      }
-    }
+    img.onload = () => {
+      title.textContent = "Сервер доступен!";
+      desc.textContent = "Переход на сайт...";
+      setTimeout(() => window.location.href = tunnelUrl, 700);
+    };
 
-    function showError(msg) {
-      document.querySelector(".loader").style.display = "none";
-      document.getElementById("status").innerText = "Ошибка подключения";
-      document.getElementById("status").classList.add("error");
-      document.getElementById("info").innerText = msg;
-    }
+    img.onerror = () => {
+      showError("Сервер недоступен или туннель не запущен.");
+    };
 
-    checkAndRedirect();
-  </script>
+    img.src = favicon;
+
+  } catch (err) {
+    showError("Ошибка: " + err.message);
+  }
+
+  function showError(msg) {
+    title.textContent = "Ошибка подключения";
+    title.classList.add("error");
+    desc.textContent = msg;
+  }
+})();
+</script>
 </body>
 </html>
